@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./models:/app/models
+      - ./output:/app/output
+    environment:
+      - MODEL_PATH=${MODEL_PATH:-/app/models/yolov8n.pt}
+      - OUTPUT_DIR=${OUTPUT_DIR:-/app/output}
+      - CONFIDENCE_THRESHOLD_DEFAULT=${CONFIDENCE_THRESHOLD_DEFAULT:-0.25}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "${UI_PORT:-8501}:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - API_URL=${API_URL:-http://api:8000/detect}
