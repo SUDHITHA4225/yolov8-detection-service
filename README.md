@@ -1,104 +1,271 @@
 # YOLOv8 Object Detection Service
 
-A containerized object detection application with a FastAPI backend and a Streamlit frontend. The backend loads a pre-trained YOLOv8 model, performs inference on uploaded images, saves annotated results to disk, and returns JSON detection data.
+A containerized object detection application built using **FastAPI**, **Streamlit**, and **YOLOv8**. The application allows users to upload an image, performs object detection using a pre-trained YOLOv8 model, returns structured JSON results, and saves an annotated image with detected objects.
 
-## Project Structure
+---
 
-- `api/` - FastAPI backend service
-- `ui/` - Streamlit frontend service
-- `models/` - Persisted YOLO model weights
-- `output/` - Annotated inference output
-- `scripts/download_model.sh` - Downloads the YOLOv8 model
-- `docker-compose.yml` - Orchestrates `api` and `ui` services
-- `.env.example` - Environment variable template
+# Features
 
-## Setup
+* Real-time object detection using YOLOv8
+* FastAPI REST API for inference
+* Streamlit web interface
+* Docker and Docker Compose support
+* Configurable confidence threshold
+* Detection summary by object class
+* Automatic saving of annotated images
+* Health check endpoint
+* Environment variable configuration
 
-1. Copy `.env.example` to `.env` and update values if needed.
+---
+
+# Project Structure
+
+```text
+yolov8-object-detection-service/
+│
+├── api/
+│   ├── main.py
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── ui/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── models/
+│
+├── output/
+│
+├── scripts/
+│   └── download_model.sh
+│
+├── docker-compose.yml
+├── .env.example
+├── README.md
+└── .gitignore
+```
+
+---
+
+# Technologies Used
+
+| Category         | Technology           |
+| ---------------- | -------------------- |
+| Backend          | FastAPI              |
+| Frontend         | Streamlit            |
+| Object Detection | YOLOv8 (Ultralytics) |
+| Deep Learning    | PyTorch              |
+| Image Processing | OpenCV, Pillow       |
+| Language         | Python               |
+| Containerization | Docker               |
+| Orchestration    | Docker Compose       |
+
+---
+
+# Installation
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/your-username/yolov8-object-detection-service.git
+
+cd yolov8-object-detection-service
+```
+
+## Create the Environment File
 
 ```bash
 cp .env.example .env
 ```
 
-2. Build and start the application using Docker Compose.
+Modify the values if necessary.
+
+## Build and Start the Application
 
 ```bash
 docker-compose up --build -d
 ```
 
-3. Verify services are running.
+## Verify Running Services
 
 ```bash
 docker-compose ps
 ```
 
-4. Open the web UI in your browser:
+---
 
-- Streamlit UI: `http://localhost:8501`
-- API health: `http://localhost:8000/health`
+# Application URLs
 
-## API Endpoints
+| Service           | URL                          |
+| ----------------- | ---------------------------- |
+| Streamlit UI      | http://localhost:8501        |
+| FastAPI API       | http://localhost:8000        |
+| API Documentation | http://localhost:8000/docs   |
+| Health Check      | http://localhost:8000/health |
 
-### GET /health
+---
 
-Returns a simple health response.
+# API Endpoints
 
-Example response:
+## Health Check
 
-```json
-{
-  "status": "ok"
-}
-```
+**GET** `/health`
 
-### POST /detect
-
-Accepts a multipart/form-data request with an image file and an optional `confidence_threshold`.
-
-Request fields:
-
-- `image` - JPEG or PNG image file
-- `confidence_threshold` - float between 0 and 1
-
-Example response:
+Response
 
 ```json
 {
-  "detections": [
-    {
-      "box": [150, 200, 250, 400],
-      "label": "person",
-      "score": 0.92
-    }
-  ],
-  "summary": {
-    "person": 1
-  },
-  "annotated_image": "<base64-encoded-image>"
+    "status": "ok"
 }
 ```
 
-## Notes
+---
 
-- The YOLOv8 model weights are downloaded by `scripts/download_model.sh` during API build.
-- Annotated images are saved to `output/last_annotated.jpg` on every successful detection.
-- Do not commit `.env` or any model `.pt` files.
+## Object Detection
 
-## Environment Variables
+**POST** `/detect`
 
-- `API_PORT` - port for the API service
-- `UI_PORT` - port for the Streamlit UI
-- `MODEL_PATH` - path to the YOLO model inside the container
-- `CONFIDENCE_THRESHOLD_DEFAULT` - default detection confidence
-- `API_URL` - URL used by the UI to call the API
-- `OUTPUT_DIR` - directory to write annotated images
+### Request
 
-## Troubleshooting
+Content-Type:
 
-- If the `api` service is unhealthy, check logs with:
+```
+multipart/form-data
+```
+
+Parameters
+
+| Parameter            | Type                   | Required |
+| -------------------- | ---------------------- | -------- |
+| image                | Image File (.jpg/.png) | Yes      |
+| confidence_threshold | Float                  | No       |
+
+### Sample Response
+
+```json
+{
+    "detections": [
+        {
+            "box": [150, 200, 250, 400],
+            "label": "person",
+            "score": 0.92
+        }
+    ],
+    "summary": {
+        "person": 1
+    },
+    "annotated_image": "<base64-encoded-image>"
+}
+```
+
+---
+
+# Application Workflow
+
+```text
+Upload Image
+      │
+      ▼
+Streamlit UI
+      │
+      ▼
+FastAPI Backend
+      │
+      ▼
+YOLOv8 Model
+      │
+      ▼
+Object Detection
+      │
+      ├── JSON Response
+      └── Annotated Image
+              │
+              ▼
+output/last_annotated.jpg
+```
+
+---
+
+# Environment Variables
+
+| Variable                     | Description                        |
+| ---------------------------- | ---------------------------------- |
+| API_PORT                     | Port for the FastAPI service       |
+| UI_PORT                      | Port for the Streamlit application |
+| API_URL                      | API endpoint used by the UI        |
+| MODEL_PATH                   | Path to the YOLO model             |
+| OUTPUT_DIR                   | Directory for annotated images     |
+| CONFIDENCE_THRESHOLD_DEFAULT | Default confidence threshold       |
+
+---
+
+# Output
+
+For every successful detection, the application:
+
+* Returns detection results in JSON format.
+* Generates a summary of detected object classes.
+* Saves the annotated image to:
+
+```text
+output/last_annotated.jpg
+```
+
+---
+
+# Docker Commands
+
+Build Images
+
+```bash
+docker-compose build
+```
+
+Start Services
+
+```bash
+docker-compose up -d
+```
+
+Stop Services
+
+```bash
+docker-compose down
+```
+
+View API Logs
 
 ```bash
 docker-compose logs api
 ```
 
-- If the model fails to download, ensure outbound network access is available from the Docker build environment.
+---
+
+# Example Requests
+
+Health Check
+
+```bash
+curl http://localhost:8000/health
+```
+
+Object Detection
+
+```bash
+curl -X POST \
+-F "image=@test.jpg" \
+-F "confidence_threshold=0.5" \
+http://localhost:8000/detect
+```
+
+---
+
+## Conclusion
+
+This project demonstrates a complete end-to-end object detection system using YOLOv8, FastAPI, Streamlit, and Docker. Its modular and containerized design provides a scalable foundation for deploying real-time computer vision applications.
+
+
+---
+
+
